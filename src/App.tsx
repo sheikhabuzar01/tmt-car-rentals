@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Car as CarIcon, Shield, User, Key, ArrowLeft,
-  AlertCircle, Info, Sparkles, Check, X
+  AlertCircle, Info, Sparkles, Check, X, Menu
 } from 'lucide-react';
 import type { Car, Booking } from './utils/mockData';
 import { INITIAL_CARS, INITIAL_BOOKINGS } from './utils/mockData';
@@ -18,6 +18,7 @@ interface ToastMessage {
 export default function App() {
   // Portal routing state: 'selector' | 'customer' | 'owner'
   const [portal, setPortal] = useState<'selector' | 'customer' | 'owner'>('selector');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // State for inventory & bookings
   const [cars, setCars] = useState<Car[]>([]);
@@ -30,6 +31,11 @@ export default function App() {
 
   // Toast notifications state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const handleSwitchPortal = (targetPortal: 'selector' | 'customer' | 'owner') => {
+    setPortal(targetPortal);
+    setIsMobileMenuOpen(false);
+  };
 
   // 1. Initial State Loading & Synchronization with LocalStorage
   useEffect(() => {
@@ -227,17 +233,25 @@ export default function App() {
       
       {/* Dynamic Navigation Header (for active portals, not the initial role selector) */}
       {portal !== 'selector' && (
-        <header className="portal-header glass-panel">
+        <header className="portal-header glass-panel" style={{ position: 'relative' }}>
           <div className="container header-flex">
-            <div className="logo-container" onClick={() => setPortal('selector')} style={{ cursor: 'pointer' }}>
+            <div className="logo-container" onClick={() => handleSwitchPortal('selector')} style={{ cursor: 'pointer' }}>
               <CarIcon className="logo-icon" size={24} />
               <span>TMT <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>Car Rental</span></span>
             </div>
             
-            <div className="header-actions">
+            <button 
+              className="hamburger-btn"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle navigation"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+
+            <div className="header-actions desktop-only">
               <button 
                 className="btn btn-secondary switch-portal-btn"
-                onClick={() => setPortal('selector')}
+                onClick={() => handleSwitchPortal('selector')}
               >
                 <ArrowLeft size={14} /> Back to Hub
               </button>
@@ -246,7 +260,7 @@ export default function App() {
                 <button 
                   className="btn btn-primary switch-portal-btn"
                   onClick={() => {
-                    setPortal('owner');
+                    handleSwitchPortal('owner');
                     showToast('Admin Portal cleared.', 'success');
                   }}
                   style={{ background: 'var(--secondary)', color: 'var(--primary)', border: '1px solid var(--border)' }}
@@ -256,13 +270,46 @@ export default function App() {
               ) : (
                 <button 
                   className="btn btn-primary switch-portal-btn"
-                  onClick={() => setPortal('customer')}
+                  onClick={() => handleSwitchPortal('customer')}
                 >
                   <User size={14} /> Customer View
                 </button>
               )}
             </div>
           </div>
+
+          {/* Mobile dropdown menu */}
+          {isMobileMenuOpen && (
+            <div className="mobile-nav-menu glass-panel fade-in">
+              <button 
+                className="btn btn-secondary mobile-nav-btn"
+                onClick={() => handleSwitchPortal('selector')}
+              >
+                <ArrowLeft size={14} /> Back to Hub
+              </button>
+              
+              {portal === 'customer' ? (
+                <button 
+                  className="btn btn-primary mobile-nav-btn"
+                  onClick={() => {
+                    handleSwitchPortal('owner');
+                    showToast('Admin Portal cleared.', 'success');
+                  }}
+                  style={{ background: 'var(--secondary)', color: 'var(--primary)', border: '1px solid var(--border)', width: '100%' }}
+                >
+                  <Shield size={14} /> Admin Portal
+                </button>
+              ) : (
+                <button 
+                  className="btn btn-primary mobile-nav-btn"
+                  onClick={() => handleSwitchPortal('customer')}
+                  style={{ width: '100%' }}
+                >
+                  <User size={14} /> Customer View
+                </button>
+              )}
+            </div>
+          )}
         </header>
       )}
 
@@ -279,7 +326,7 @@ export default function App() {
 
           <div className="selector-grid">
             {/* Customer Portal Selector */}
-            <div className="selector-card glass-panel" onClick={() => setPortal('customer')}>
+            <div className="selector-card glass-panel" onClick={() => handleSwitchPortal('customer')}>
               <div className="selector-icon-wrapper">
                 <User size={36} />
               </div>
@@ -293,7 +340,7 @@ export default function App() {
             </div>
 
             {/* Owner Portal Selector */}
-            <div className="selector-card owner-card glass-panel" onClick={() => { setPortal('owner'); showToast('Admin Portal cleared.', 'success'); }}>
+            <div className="selector-card owner-card glass-panel" onClick={() => { handleSwitchPortal('owner'); showToast('Admin Portal cleared.', 'success'); }}>
               <div className="selector-icon-wrapper">
                 <Shield size={36} />
               </div>
