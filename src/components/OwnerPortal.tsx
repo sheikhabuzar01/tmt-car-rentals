@@ -309,7 +309,7 @@ export default function OwnerPortal({
         {/* SECTION 1: Dashboard Panel */}
         {activeSection === 'dashboard' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <div className="admin-tab-header">
               <div>
                 <h1 style={{ fontSize: '2rem' }}>Administration Dashboard</h1>
                 <p style={{ color: 'var(--text-tertiary)' }}>Real-time rental telemetry and sales analytics.</p>
@@ -466,7 +466,7 @@ export default function OwnerPortal({
         {/* SECTION 2: Fleet Manager */}
         {activeSection === 'fleet' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div className="admin-tab-header">
               <div>
                 <h1 style={{ fontSize: '2rem' }}>Fleet Management</h1>
                 <p style={{ color: 'var(--text-tertiary)' }}>Modify, delete, or inspect vehicle profiles.</p>
@@ -560,9 +560,11 @@ export default function OwnerPortal({
         {/* SECTION 3: Bookings Manager */}
         {activeSection === 'bookings' && (
           <div>
-            <div style={{ marginBottom: '24px' }}>
-              <h1 style={{ fontSize: '2rem' }}>Booking Contracts</h1>
-              <p style={{ color: 'var(--text-tertiary)' }}>Approve, cancel, or close rental bookings.</p>
+            <div className="admin-tab-header">
+              <div>
+                <h1 style={{ fontSize: '2rem' }}>Booking Contracts</h1>
+                <p style={{ color: 'var(--text-tertiary)' }}>Approve, cancel, or close rental bookings.</p>
+              </div>
             </div>
 
             {/* Filter Search */}
@@ -667,9 +669,11 @@ export default function OwnerPortal({
         {/* SECTION 4: Customer Directory */}
         {activeSection === 'customers' && (
           <div>
-            <div style={{ marginBottom: '24px' }}>
-              <h1 style={{ fontSize: '2rem' }}>Customer Database</h1>
-              <p style={{ color: 'var(--text-tertiary)' }}>Customer profiles, phone lines, and rental stats.</p>
+            <div className="admin-tab-header">
+              <div>
+                <h1 style={{ fontSize: '2rem' }}>Customer Database</h1>
+                <p style={{ color: 'var(--text-tertiary)' }}>Customer profiles, phone lines, and rental stats.</p>
+              </div>
             </div>
 
             {/* Filter Search */}
