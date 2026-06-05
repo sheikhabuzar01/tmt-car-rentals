@@ -7,6 +7,7 @@ import type { Car, Booking } from './utils/mockData';
 import { INITIAL_CARS, INITIAL_BOOKINGS } from './utils/mockData';
 import CustomerPortal from './components/CustomerPortal';
 import OwnerPortal from './components/OwnerPortal';
+import { supabase } from './utils/supabaseClient';
 
 // Toast structure
 interface ToastMessage {
@@ -37,24 +38,58 @@ export default function App() {
     setIsMobileMenuOpen(false);
   };
 
-  // 1. Initial State Loading & Synchronization with LocalStorage
+  // 1. Initial State Loading & Synchronization with Supabase
   useEffect(() => {
-    const savedCars = localStorage.getItem('tmt_cars');
-    const savedBookings = localStorage.getItem('tmt_bookings');
+    async function loadData() {
+      // Fetch Cars
+      let { data: carsData, error: carsError } = await supabase
+        .from('cars')
+        .select('*');
 
-    if (savedCars) {
-      setCars(JSON.parse(savedCars));
-    } else {
-      setCars(INITIAL_CARS);
-      localStorage.setItem('tmt_cars', JSON.stringify(INITIAL_CARS));
-    }
+      if (carsError) {
+        showToast('Error loading cars from database.', 'error');
+        console.error(carsError);
+      } else if (!carsData || carsData.length === 0) {
+        // Seed database with initial cars
+        const { error: seedCarsErr } = await supabase.from('cars').insert(INITIAL_CARS);
+        if (seedCarsErr) {
+          console.error('Error seeding cars:', seedCarsErr);
+        } else {
+          setCars(INITIAL_CARS);
+        }
+      } else {
+        // Sort cars by id (e.g. car-1, car-2)
+        carsData.sort((a, b) => {
+          const aNum = parseInt(a.id.split('-')[1]) || 0;
+          const bNum = parseInt(b.id.split('-')[1]) || 0;
+          return aNum - bNum;
+        });
+        setCars(carsData);
+      }
 
-    if (savedBookings) {
-      setBookings(JSON.parse(savedBookings));
-    } else {
-      setBookings(INITIAL_BOOKINGS);
-      localStorage.setItem('tmt_bookings', JSON.stringify(INITIAL_BOOKINGS));
+      // Fetch Bookings
+      let { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('*');
+
+      if (bookingsError) {
+        showToast('Error loading bookings from database.', 'error');
+        console.error(bookingsError);
+      } else if (!bookingsData || bookingsData.length === 0) {
+        // Seed database with initial bookings
+        const { error: seedBookingsErr } = await supabase.from('bookings').insert(INITIAL_BOOKINGS);
+        if (seedBookingsErr) {
+          console.error('Error seeding bookings:', seedBookingsErr);
+        } else {
+          setBookings(INITIAL_BOOKINGS);
+        }
+      } else {
+        // Sort bookings by id descending
+        bookingsData.sort((a, b) => b.id.localeCompare(a.id));
+        setBookings(bookingsData);
+      }
     }
+    loadData();
   }, []);
 
   // 2. Helper to display toasts
@@ -69,121 +104,209 @@ export default function App() {
   };
 
   // 3. Customer creates a booking
-  const handleCreateBooking = (newBookingData: Omit<Booking, 'id' | 'status' | 'paymentStatus'>) => {
+  const handleCreateBooking = async (newBookingData: Omit<Booking, 'id' | 'status' | 'paymentStatus'>) => {
     const newBookingId = 'b-' + Math.floor(Math.random() * 90000 + 10000);
     const newBooking: Booking = {
       ...newBookingData,
       id: newBookingId,
-      status: 'Active', // Instantly active upon simulated credit card payment success
+      status: 'Active',
       paymentStatus: 'Paid'
     };
 
-    // Update bookings list
-    const updatedBookings = [newBooking, ...bookings];
-    setBookings(updatedBookings);
-    localStorage.setItem('tmt_bookings', JSON.stringify(updatedBookings));
+    // Insert new booking
+    const { error: bookingErr } = await supabase
+      .from('bookings')
+      .insert([newBooking]);
+
+    if (bookingErr) {
+      showToast('Error saving booking to database.', 'error');
+      console.error(bookingErr);
+      return;
+    }
 
     // Update car status to 'Rented'
-    const updatedCars = cars.map(car => {
+    const { error: carErr } = await supabase
+      .from('cars')
+      .update({ status: 'Rented' })
+      .eq('id', newBookingData.carId);
+
+    if (carErr) {
+      showToast('Error updating car status in database.', 'error');
+      console.error(carErr);
+      return;
+    }
+
+    // Update local state
+    setBookings([newBooking, ...bookings]);
+    setCars(cars.map(car => {
       if (car.id === newBookingData.carId) {
         return { ...car, status: 'Rented' as const };
       }
       return car;
-    });
-    setCars(updatedCars);
-    localStorage.setItem('tmt_cars', JSON.stringify(updatedCars));
+    }));
+    showToast('Booking successfully recorded!', 'success');
   };
 
   // 4. Customer cancels booking (reverts car to Available)
-  const handleCancelBooking = (bookingId: string) => {
+  const handleCancelBooking = async (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
 
     // Update booking status to Cancelled
-    const updatedBookings = bookings.map(b => {
+    const { error: bookingErr } = await supabase
+      .from('bookings')
+      .update({ status: 'Cancelled' })
+      .eq('id', bookingId);
+
+    if (bookingErr) {
+      showToast('Error cancelling booking in database.', 'error');
+      console.error(bookingErr);
+      return;
+    }
+
+    // Update car status to Available
+    const { error: carErr } = await supabase
+      .from('cars')
+      .update({ status: 'Available' })
+      .eq('id', booking.carId);
+
+    if (carErr) {
+      showToast('Error updating car status in database.', 'error');
+      console.error(carErr);
+      return;
+    }
+
+    // Update local state
+    setBookings(bookings.map(b => {
       if (b.id === bookingId) {
         return { ...b, status: 'Cancelled' as const };
       }
       return b;
-    });
-    setBookings(updatedBookings);
-    localStorage.setItem('tmt_bookings', JSON.stringify(updatedBookings));
-
-    // Update car status back to Available
-    const updatedCars = cars.map(car => {
+    }));
+    setCars(cars.map(car => {
       if (car.id === booking.carId) {
         return { ...car, status: 'Available' as const };
       }
       return car;
-    });
-    setCars(updatedCars);
-    localStorage.setItem('tmt_cars', JSON.stringify(updatedCars));
+    }));
+    showToast('Booking successfully cancelled.', 'info');
   };
 
   // 5. Owner Portal adds a new car to inventory
-  const handleAddCar = (newCarData: Omit<Car, 'id'>) => {
-    const newCarId = 'car-' + (cars.length + 1);
+  const handleAddCar = async (newCarData: Omit<Car, 'id'>) => {
+    const newCarId = 'car-' + Math.floor(Math.random() * 90000 + 10000);
     const newCar: Car = {
       ...newCarData,
       id: newCarId
     };
 
-    const updatedCars = [...cars, newCar];
-    setCars(updatedCars);
-    localStorage.setItem('tmt_cars', JSON.stringify(updatedCars));
+    const { error } = await supabase
+      .from('cars')
+      .insert([newCar]);
+
+    if (error) {
+      showToast('Error adding vehicle to database.', 'error');
+      console.error(error);
+      return;
+    }
+
+    setCars([...cars, newCar]);
   };
 
   // 6. Owner Portal updates car status (e.g. to Maintenance or Available)
-  const handleUpdateCarStatus = (carId: string, status: Car['status']) => {
-    const updatedCars = cars.map(car => {
+  const handleUpdateCarStatus = async (carId: string, status: Car['status']) => {
+    const { error } = await supabase
+      .from('cars')
+      .update({ status })
+      .eq('id', carId);
+
+    if (error) {
+      showToast('Error updating status in database.', 'error');
+      console.error(error);
+      return;
+    }
+
+    setCars(cars.map(car => {
       if (car.id === carId) {
         return { ...car, status };
       }
       return car;
-    });
-    setCars(updatedCars);
-    localStorage.setItem('tmt_cars', JSON.stringify(updatedCars));
+    }));
   };
 
   // 7. Owner Portal deletes a car from inventory
-  const handleDeleteCar = (carId: string) => {
-    const updatedCars = cars.filter(car => car.id !== carId);
-    setCars(updatedCars);
-    localStorage.setItem('tmt_cars', JSON.stringify(updatedCars));
+  const handleDeleteCar = async (carId: string) => {
+    const { error } = await supabase
+      .from('cars')
+      .delete()
+      .eq('id', carId);
+
+    if (error) {
+      showToast('Error deleting vehicle from database.', 'error');
+      console.error(error);
+      return;
+    }
+
+    setCars(cars.filter(car => car.id !== carId));
   };
 
   // 8. Owner Portal manages booking statuses
-  const handleUpdateBookingStatus = (bookingId: string, status: Booking['status']) => {
+  const handleUpdateBookingStatus = async (bookingId: string, status: Booking['status']) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
 
-    // Update booking status
-    const updatedBookings = bookings.map(b => {
+    const paymentStatus = status === 'Cancelled' ? ('Refunded' as const) : booking.paymentStatus;
+
+    // Update booking in database
+    const { error: bookingErr } = await supabase
+      .from('bookings')
+      .update({ status, paymentStatus })
+      .eq('id', bookingId);
+
+    if (bookingErr) {
+      showToast('Error updating booking in database.', 'error');
+      console.error(bookingErr);
+      return;
+    }
+
+    // Determine target car status
+    let carStatus: Car['status'] | null = null;
+    if (status === 'Completed' || status === 'Cancelled') {
+      carStatus = 'Available';
+    } else if (status === 'Active') {
+      carStatus = 'Rented';
+    }
+
+    // Update car status in database
+    if (carStatus) {
+      const { error: carErr } = await supabase
+        .from('cars')
+        .update({ status: carStatus })
+        .eq('id', booking.carId);
+
+      if (carErr) {
+        showToast('Error updating car status in database.', 'error');
+        console.error(carErr);
+        return;
+      }
+    }
+
+    // Update local state
+    setBookings(bookings.map(b => {
       if (b.id === bookingId) {
-        return { 
-          ...b, 
-          status,
-          paymentStatus: status === 'Cancelled' ? ('Refunded' as const) : b.paymentStatus
-        };
+        return { ...b, status, paymentStatus };
       }
       return b;
-    });
-    setBookings(updatedBookings);
-    localStorage.setItem('tmt_bookings', JSON.stringify(updatedBookings));
+    }));
 
-    // Side-effects on Car availability based on booking status transition
-    const updatedCars = cars.map(car => {
-      if (car.id === booking.carId) {
-        if (status === 'Completed' || status === 'Cancelled') {
-          return { ...car, status: 'Available' as const };
-        } else if (status === 'Active') {
-          return { ...car, status: 'Rented' as const };
+    if (carStatus) {
+      setCars(cars.map(car => {
+        if (car.id === booking.carId) {
+          return { ...car, status: carStatus };
         }
-      }
-      return car;
-    });
-    setCars(updatedCars);
-    localStorage.setItem('tmt_cars', JSON.stringify(updatedCars));
+        return car;
+      }));
+    }
   };
 
   // Passcode modal input handlers
