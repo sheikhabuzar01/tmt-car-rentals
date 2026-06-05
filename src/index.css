@@ -922,6 +922,9 @@ a {
   .wizard-step {
     font-size: calc(0.8rem - 2px);
   }
+  .step-indicator {
+    font-size: calc(0.7rem - 2px);
+  }
 }
 .wizard-step.active {
   color: var(--primary);
