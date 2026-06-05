@@ -917,6 +917,12 @@ a {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+@media (max-width: 768px) {
+  .wizard-step {
+    font-size: calc(0.8rem - 2px);
+  }
+}
 .wizard-step.active {
   color: var(--primary);
 }
