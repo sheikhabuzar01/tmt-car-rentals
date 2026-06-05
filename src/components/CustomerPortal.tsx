@@ -540,7 +540,7 @@ export default function CustomerPortal({
                 </div>
                 <div style={{ marginTop: '20px' }}>
                   <h4 style={{ marginBottom: '10px' }}>Vehicle Specifications</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.9rem' }}>
+                  <div className="specs-grid">
                     <div style={{ padding: '8px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
                       <strong>Year:</strong> {selectedCar.year}
                     </div>
@@ -646,7 +646,7 @@ export default function CustomerPortal({
               {/* STEP 1: Dates and User Info Form */}
               {wizardStep === 1 && (
                 <form onSubmit={handleNextStep1} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-grid">
                     <div>
                       <label className="form-label">Pickup Date</label>
                       <input 
@@ -685,7 +685,7 @@ export default function CustomerPortal({
                           required
                         />
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="form-grid">
                         <div>
                           <label className="form-label">Email Address</label>
                           <input 
@@ -874,7 +874,7 @@ export default function CustomerPortal({
                         required
                       />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="form-grid">
                       <div>
                         <label className="form-label">Expiration Date (MM/YY)</label>
                         <input 

@@ -926,6 +926,29 @@ a {
     font-size: calc(0.7rem - 2px);
   }
 }
+
+@media (max-width: 600px) {
+  /* Hide non-active step text on mobile to avoid overflow */
+  .wizard-step span:not(.step-indicator) {
+    display: none;
+  }
+  .wizard-step.active span:not(.step-indicator) {
+    display: inline;
+  }
+  .wizard-steps {
+    gap: 8px;
+    justify-content: space-around;
+  }
+  
+  .wizard-container {
+    padding: 24px 16px;
+  }
+  
+  .modal-close {
+    top: 12px;
+    right: 12px;
+  }
+}
 .wizard-step.active {
   color: var(--primary);
 }
@@ -1345,6 +1368,19 @@ a {
 
 @media (max-width: 600px) {
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .specs-grid {
     grid-template-columns: 1fr;
   }
 }
