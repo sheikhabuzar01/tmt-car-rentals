@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Car as CarIcon, Shield, User, Key, ArrowLeft,
+  Car as CarIcon, Shield, User, ArrowLeft,
   AlertCircle, Info, Sparkles, Check, X, Menu
 } from 'lucide-react';
 import type { Car, Booking } from './utils/mockData';
@@ -25,21 +25,11 @@ export default function App() {
   const [cars, setCars] = useState<Car[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
 
-  // Passcode modal state
-  const [isPasscodeOpen, setIsPasscodeOpen] = useState(false);
-  const [passcode, setPasscode] = useState(['', '', '', '']);
-  const adminPasscode = '1234';
-
   // Toast notifications state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const handleSwitchPortal = (targetPortal: 'selector' | 'customer' | 'owner') => {
-    if (targetPortal === 'owner') {
-      setIsPasscodeOpen(true);
-      setPasscode(['', '', '', '']);
-    } else {
-      setPortal(targetPortal);
-    }
+    setPortal(targetPortal);
     setIsMobileMenuOpen(false);
   };
 
@@ -314,48 +304,6 @@ export default function App() {
     }
   };
 
-  // Passcode modal input handlers
-  const handlePasscodeChange = (index: number, val: string) => {
-    if (!/^[0-9]?$/.test(val)) return; // Allow numbers only
-    const newPasscode = [...passcode];
-    newPasscode[index] = val;
-    setPasscode(newPasscode);
-
-    // Auto-focus next field
-    if (val && index < 3) {
-      const nextInput = document.getElementById(`pin-${index + 1}`);
-      nextInput?.focus();
-    }
-
-    // Check passcode upon typing the final digit
-    const passcodeString = newPasscode.join('');
-    if (passcodeString.length === 4) {
-      if (passcodeString === adminPasscode) {
-        setTimeout(() => {
-          setPortal('owner');
-          setIsPasscodeOpen(false);
-          setPasscode(['', '', '', '']);
-          showToast('Owner Portal access granted.', 'success');
-        }, 300);
-      } else {
-        setTimeout(() => {
-          showToast('Invalid security passcode. Access Denied.', 'error');
-          setPasscode(['', '', '', '']);
-          document.getElementById('pin-0')?.focus();
-        }, 300);
-      }
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !passcode[index] && index > 0) {
-      const newPasscode = [...passcode];
-      newPasscode[index - 1] = '';
-      setPasscode(newPasscode);
-      document.getElementById(`pin-${index - 1}`)?.focus();
-    }
-  };
-
   return (
     <div className={portal === 'owner' ? 'owner-portal-active' : ''} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-primary)', color: 'var(--text-secondary)', transition: 'background-color 0.4s ease, color 0.4s ease' }}>
       
@@ -500,44 +448,6 @@ export default function App() {
           onUpdateBookingStatus={handleUpdateBookingStatus}
           showToast={showToast}
         />
-      )}
-
-      {/* Passcode Modal Overlay */}
-      {isPasscodeOpen && (
-        <div className="modal-overlay" onClick={() => setIsPasscodeOpen(false)}>
-          <div className="modal-content passcode-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setIsPasscodeOpen(false)}>
-              <X className="logo-icon" size={18} style={{ color: 'var(--text-secondary)' }} />
-            </button>
-            
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-              <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                <Key size={30} />
-              </div>
-            </div>
-            
-            <h3>Administrative Clearance</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '-8px' }}>
-              Enter the owner portal passcode to verify authentication (Hint: **1234**)
-            </p>
-
-            <div className="passcode-inputs">
-              {[0, 1, 2, 3].map((idx) => (
-                <input
-                  key={idx}
-                  id={`pin-${idx}`}
-                  type="password"
-                  maxLength={1}
-                  value={passcode[idx]}
-                  onChange={(e) => handlePasscodeChange(idx, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(idx, e)}
-                  autoFocus={idx === 0}
-                  className="form-input"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Global toast notification banner stack */}
