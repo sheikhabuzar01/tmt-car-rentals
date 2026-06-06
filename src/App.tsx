@@ -460,6 +460,20 @@ export default function App() {
                 Open Booking Portal
               </button>
             </div>
+
+            {/* Owner Portal Selector */}
+            <div className="selector-card owner-card glass-panel" onClick={() => handleSwitchPortal('owner')}>
+              <div className="selector-icon-wrapper">
+                <Shield size={36} />
+              </div>
+              <h2 style={{ fontSize: '1.5rem' }}>Admin Portal</h2>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Track gross capitalization and vehicle performance charts, insert new assets to the fleet, edit service items, and verify billing contracts.
+              </p>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
+                Admin Dashboard
+              </button>
+            </div>
           </div>
         </section>
       )}
