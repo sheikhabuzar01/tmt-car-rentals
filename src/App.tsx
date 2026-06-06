@@ -34,7 +34,12 @@ export default function App() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const handleSwitchPortal = (targetPortal: 'selector' | 'customer' | 'owner') => {
-    setPortal(targetPortal);
+    if (targetPortal === 'owner') {
+      setIsPasscodeOpen(true);
+      setPasscode(['', '', '', '']);
+    } else {
+      setPortal(targetPortal);
+    }
     setIsMobileMenuOpen(false);
   };
 
@@ -382,10 +387,7 @@ export default function App() {
               {portal === 'customer' ? (
                 <button 
                   className="btn btn-primary switch-portal-btn"
-                  onClick={() => {
-                    handleSwitchPortal('owner');
-                    showToast('Admin Portal cleared.', 'success');
-                  }}
+                  onClick={() => handleSwitchPortal('owner')}
                   style={{ background: 'var(--secondary)', color: 'var(--primary)', border: '1px solid var(--border)' }}
                 >
                   <Shield size={14} /> Admin Portal
@@ -414,10 +416,7 @@ export default function App() {
               {portal === 'customer' ? (
                 <button 
                   className="btn btn-primary mobile-nav-btn"
-                  onClick={() => {
-                    handleSwitchPortal('owner');
-                    showToast('Admin Portal cleared.', 'success');
-                  }}
+                  onClick={() => handleSwitchPortal('owner')}
                   style={{ background: 'var(--secondary)', color: 'var(--primary)', border: '1px solid var(--border)', width: '100%' }}
                 >
                   <Shield size={14} /> Admin Portal
@@ -459,20 +458,6 @@ export default function App() {
               </p>
               <button className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
                 Open Booking Portal
-              </button>
-            </div>
-
-            {/* Owner Portal Selector */}
-            <div className="selector-card owner-card glass-panel" onClick={() => { handleSwitchPortal('owner'); showToast('Admin Portal cleared.', 'success'); }}>
-              <div className="selector-icon-wrapper">
-                <Shield size={36} />
-              </div>
-              <h2 style={{ fontSize: '1.5rem' }}>Owner / Admin Portal</h2>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                Track gross capitalization and vehicle performance charts, insert new assets to the fleet, edit service items, and verify billing contracts.
-              </p>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
-                Admin Dashboard
               </button>
             </div>
           </div>

@@ -34,6 +34,7 @@ export default function OwnerPortal({
 
   // Add Car Modal state
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
+  const [imageSource, setImageSource] = useState<'upload' | 'predefined'>('predefined');
   const [newCar, setNewCar] = useState({
     name: '',
     brand: '',
@@ -150,6 +151,22 @@ export default function OwnerPortal({
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Image size exceeds 2MB limit.', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewCar(prev => ({ ...prev, image: reader.result as string }));
+        showToast('Photo uploaded successfully!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Submit new car form
   const handleAddCarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,6 +176,10 @@ export default function OwnerPortal({
     }
     if (!newCar.registration.trim()) {
       showToast('Registration/License number is required.', 'error');
+      return;
+    }
+    if (!newCar.image) {
+      showToast('Please upload an image or select a preset photo.', 'error');
       return;
     }
 
@@ -182,6 +203,7 @@ export default function OwnerPortal({
       features: [],
       transmission: 'Automatic'
     });
+    setImageSource('predefined');
   };
 
   // Toggle car status
@@ -843,16 +865,69 @@ export default function OwnerPortal({
                   </div>
                   
                   <div className="form-group-full">
-                    <label className="form-label">Select Associated Photo</label>
-                    <select 
-                      className="form-input"
-                      value={newCar.image}
-                      onChange={(e) => setNewCar({ ...newCar, image: e.target.value })}
-                    >
-                      {imageOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                    <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Vehicle Photo Source</span>
+                      <span style={{ display: 'flex', gap: '8px', fontSize: '0.8rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 500 }}>
+                          <input 
+                            type="radio" 
+                            name="imageSource" 
+                            checked={imageSource === 'predefined'} 
+                            onChange={() => {
+                              setImageSource('predefined');
+                              setNewCar({ ...newCar, image: '/2.jpg' });
+                            }} 
+                          />
+                          Use Preset
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 500 }}>
+                          <input 
+                            type="radio" 
+                            name="imageSource" 
+                            checked={imageSource === 'upload'} 
+                            onChange={() => {
+                              setImageSource('upload');
+                              setNewCar({ ...newCar, image: '' });
+                            }} 
+                          />
+                          Upload Custom
+                        </label>
+                      </span>
+                    </label>
+
+                    {imageSource === 'predefined' ? (
+                      <select 
+                        className="form-input"
+                        value={newCar.image}
+                        onChange={(e) => setNewCar({ ...newCar, image: e.target.value })}
+                      >
+                        {imageOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="form-input" 
+                          onChange={handleImageUpload}
+                          style={{ padding: '8px 12px' }}
+                        />
+                        {newCar.image && (
+                          <div style={{ position: 'relative', width: '100px', height: '65px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg-tertiary)' }}>
+                            <img src={newCar.image} alt="Uploaded preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <button 
+                              type="button" 
+                              onClick={() => setNewCar({ ...newCar, image: '' })}
+                              style={{ position: 'absolute', top: '2px', right: '2px', padding: '2px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-group-full">
